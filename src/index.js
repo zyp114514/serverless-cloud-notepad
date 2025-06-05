@@ -101,7 +101,7 @@ router.post('/:path/pw', async request => {
 
         const { value, metadata } = await queryNote(path)
         const valid = await checkAuth(cookie, path)
-        
+
         if (!metadata.pw || valid) {
             const pw = passwd ? await saltPw(passwd) : undefined
             try {
@@ -111,7 +111,7 @@ router.post('/:path/pw', async request => {
                         pw,
                     },
                 })
-    
+
                 return returnJSON(0, null, {
                     'Set-Cookie': Cookies.serialize('auth', '', {
                         path: `/${path}`,
@@ -136,7 +136,7 @@ router.post('/:path/setting', async request => {
 
         const { value, metadata } = await queryNote(path)
         const valid = await checkAuth(cookie, path)
-        
+
         if (!metadata.pw || valid) {
             try {
                 await NOTES.put(path, value, {
@@ -183,15 +183,20 @@ router.post('/:path', async request => {
     const formData = await request.formData();
     const content = formData.get('t')
 
-    // const { metadata } = await queryNote(path)
-
     try {
-        await NOTES.put(path, content, {
-            metadata: {
-                ...metadata,
-                updateAt: dayjs().unix(),
-            },
-        })
+
+        if (content?.trim()){
+            // 有值修改
+            await NOTES.put(path, content, {
+                metadata: {
+                    ...metadata,
+                    updateAt: dayjs().unix(),
+                },
+            })
+        }else{
+            // 无值删除
+            await NOTES.delete(path)
+        }
 
         return returnJSON(0)
     } catch (error) {
